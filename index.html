@@ -28,7 +28,6 @@
   body { font-family: 'Inter', sans-serif; }
   h1,h2,h3,h4,.font-display { font-family: 'Poppins', sans-serif; }
 
-  /* Blueprint grid texture - signature visual motif evoking site plans/civil drawings */
   .blueprint-grid {
     background-image:
       linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px),
@@ -41,19 +40,59 @@
       linear-gradient(90deg, rgba(15,34,64,0.05) 1px, transparent 1px);
     background-size: 24px 24px;
   }
-  .pulse-dot {
-    animation: pulseDot 1.8s infinite;
-  }
+  .pulse-dot { animation: pulseDot 1.8s infinite; }
   @keyframes pulseDot {
     0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
     70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
   }
   .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
   .reveal.show { opacity: 1; transform: translateY(0); }
-  @media (prefers-reduced-motion: reduce) {
-    .reveal { opacity: 1; transform: none; transition: none; }
-  }
+  @media (prefers-reduced-motion: reduce) { .reveal { opacity: 1; transform: none; transition: none; } }
   ::selection { background: #D9740B; color: white; }
+
+  .timeline-item::before {
+    content: '';
+    position: absolute; left: -33px; top: 6px;
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #D9740B; border: 3px solid #F8F7F4;
+    box-shadow: 0 0 0 2px #D9740B;
+  }
+
+  /* Gallery card */
+  .gallery-card { position: relative; overflow: hidden; border-radius: 16px; aspect-ratio: 4/3; cursor: pointer; }
+  .gallery-card img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .4s ease; }
+  .gallery-card:hover img { transform: scale(1.06); }
+  .gallery-card .overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(10,26,48,0.88) 0%, transparent 55%);
+    opacity: 0; transition: opacity .3s ease;
+    display: flex; align-items: flex-end; padding: 16px;
+  }
+  .gallery-card:hover .overlay { opacity: 1; }
+  @media (max-width: 640px) { .gallery-card .overlay { opacity: 1; background: linear-gradient(to top, rgba(10,26,48,0.85) 0%, transparent 65%); } }
+
+  .filter-btn { transition: all .2s ease; }
+  .filter-btn.active { background: #D9740B; color: white; }
+  .filter-btn:not(.active) { background: white; color: #0F2240; border: 1px solid #D9740B20; }
+
+  #lightbox { display: none; position: fixed; inset: 0; z-index: 999; background: rgba(10,26,48,0.95); align-items: center; justify-content: center; cursor: zoom-out; }
+  #lightbox.open { display: flex; }
+
+  .area-card { transition: all .2s ease; }
+  .area-card:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(10,26,48,0.12); }
+
+  .faq-item .faq-answer { max-height: 0; overflow: hidden; transition: max-height .35s ease, padding .35s ease; }
+  .faq-item.open .faq-answer { max-height: 400px; }
+  .faq-item .faq-icon { transition: transform .3s ease; }
+  .faq-item.open .faq-icon { transform: rotate(45deg); }
+  .faq-item { border-bottom: 1px solid rgba(15,34,64,0.1); }
+  .faq-item:last-child { border-bottom: none; }
+
+  input:focus, select:focus, textarea:focus { outline: 2px solid #D9740B; outline-offset: 1px; }
+
+  /* SPA page switching */
+  .page-section { display: none; }
+  .page-section.active { display: block; }
 </style>
 </head>
 <body class="bg-[#F8F7F4] text-navy-900">
@@ -73,7 +112,7 @@
   <!-- ===== HEADER / NAV ===== -->
   <header class="sticky top-0 z-50 bg-navy-950/95 backdrop-blur border-b border-white/10">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16 sm:h-20">
-      <a href="index.html" class="flex items-center gap-2">
+      <a href="#home" data-page="home" class="nav-link flex items-center gap-2">
         <div class="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-amber-600 flex items-center justify-center font-display font-bold text-white text-sm">DK</div>
         <div class="leading-tight">
           <p class="font-display font-bold text-white text-sm sm:text-base tracking-wide">D.K. ENTERPRISES</p>
@@ -81,10 +120,14 @@
         </div>
       </a>
 
-      <nav class="hidden md:flex items-center gap-8 text-sm font-medium text-white/80">
-        <a href="index.html" class="text-amber-500">Home</a>
-        <a href="services.html" class="hover:text-white transition">Services</a>
-        <a href="contact.html" class="hover:text-white transition">Contact</a>
+      <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-white/80">
+        <a href="#home" data-page="home" class="nav-link hover:text-white transition">Home</a>
+        <a href="#about" data-page="about" class="nav-link hover:text-white transition">About</a>
+        <a href="#services" data-page="services" class="nav-link hover:text-white transition">Services</a>
+        <a href="#gallery" data-page="gallery" class="nav-link hover:text-white transition">Gallery</a>
+        <a href="#service-area" data-page="service-area" class="nav-link hover:text-white transition">Service Area</a>
+        <a href="#faq" data-page="faq" class="nav-link hover:text-white transition">FAQ</a>
+        <a href="#contact" data-page="contact" class="nav-link hover:text-white transition">Contact</a>
       </nav>
 
       <div class="hidden md:flex items-center gap-3">
@@ -94,253 +137,1330 @@
         </a>
       </div>
 
-      <button id="menuBtn" class="md:hidden text-white" aria-label="Toggle menu">
+      <button id="hamburger" class="md:hidden text-white" aria-label="Toggle menu" aria-expanded="false">
         <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
       </button>
     </div>
 
     <!-- Mobile menu -->
-    <div id="mobileMenu" class="hidden md:hidden bg-navy-900 border-t border-white/10 px-4 py-4 space-y-3">
-      <a href="index.html" class="block text-amber-500 font-medium py-1">Home</a>
-      <a href="services.html" class="block text-white/80 hover:text-white py-1">Services</a>
-      <a href="contact.html" class="block text-white/80 hover:text-white py-1">Contact</a>
+    <div id="mobileMenu" class="hidden md:hidden bg-navy-900 border-t border-white/10 px-4 py-4 space-y-2">
+      <a href="#home" data-page="home" class="nav-link block text-white/80 hover:text-white py-1.5">Home</a>
+      <a href="#about" data-page="about" class="nav-link block text-white/80 hover:text-white py-1.5">About</a>
+      <a href="#services" data-page="services" class="nav-link block text-white/80 hover:text-white py-1.5">Services</a>
+      <a href="#gallery" data-page="gallery" class="nav-link block text-white/80 hover:text-white py-1.5">Gallery</a>
+      <a href="#service-area" data-page="service-area" class="nav-link block text-white/80 hover:text-white py-1.5">Service Area</a>
+      <a href="#faq" data-page="faq" class="nav-link block text-white/80 hover:text-white py-1.5">FAQ</a>
+      <a href="#contact" data-page="contact" class="nav-link block text-white/80 hover:text-white py-1.5">Contact</a>
       <a href="tel:+919819431734" class="block bg-amber-600 text-white text-center font-semibold py-2.5 rounded-lg mt-2">Call Now: 098194 31734</a>
     </div>
   </header>
 
-  <!-- ===== HERO ===== -->
-  <section class="relative bg-navy-950 overflow-hidden">
-    <div class="absolute inset-0 blueprint-grid"></div>
-    <div class="absolute -right-24 -top-24 h-96 w-96 bg-amber-600/20 rounded-full blur-3xl"></div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-2 gap-12 items-center">
-      <div>
-        <div class="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full pl-2 pr-4 py-1.5 mb-6">
-          <span class="flex items-center justify-center h-6 w-6 rounded-full bg-amber-600 text-white text-xs font-bold">★</span>
-          <span class="text-white text-sm font-medium">4.9 Rating · 58 Google Reviews</span>
+  <main id="app">
+
+  <!-- ================================================================ -->
+  <!-- ===== PAGE: HOME ===== -->
+  <!-- ================================================================ -->
+  <section id="page-home" class="page-section active">
+
+    <!-- ===== HERO ===== -->
+    <section class="relative bg-navy-950 overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="absolute -right-24 -top-24 h-96 w-96 bg-amber-600/20 rounded-full blur-3xl"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24 grid lg:grid-cols-2 gap-12 items-center">
+        <div>
+          <div class="inline-flex items-center gap-2 bg-white/10 border border-white/15 rounded-full pl-2 pr-4 py-1.5 mb-6">
+            <span class="flex items-center justify-center h-6 w-6 rounded-full bg-amber-600 text-white text-xs font-bold">★</span>
+            <span class="text-white text-sm font-medium">4.9 Rating · 58 Google Reviews</span>
+          </div>
+
+          <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
+            Building Trust,<br>
+            <span class="text-amber-500">One Wall at a Time.</span>
+          </h1>
+          <p class="text-white/70 text-base sm:text-lg mt-5 max-w-md">
+            From foundation to finishing — D.K. Enterprises handles your construction, civil work, tiling, painting, plumbing and electrical needs across Navi Mumbai. Engineered right, delivered on time.
+          </p>
+
+          <div class="flex flex-wrap gap-3 mt-8">
+            <a href="#contact" data-page="contact" class="nav-link inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-3.5 rounded-lg transition shadow-lg shadow-amber-600/20">
+              Get Free Quote
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+            <a href="https://wa.me/919819431734" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-6 py-3.5 rounded-lg transition">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-1 1.1-.2.2-.4.2-.7.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.8-1.6.1-.2 0-.4-.1-.5-.1-.2-.7-1.7-1-2.3-.2-.6-.4-.5-.7-.5h-.6c-.2 0-.6.1-.8.4-.3.3-1.1 1.1-1.1 2.6 0 1.5 1.1 3 1.3 3.2.2.2 2 3.2 5 4.4 2.5 1 3 .8 3.5.8.5 0 1.7-.7 1.9-1.4.2-.6.2-1.2.2-1.3 0-.1-.2-.2-.4-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
+              WhatsApp Us
+            </a>
+          </div>
+
+          <!-- stat strip -->
+          <div class="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/10 max-w-md">
+            <div>
+              <p class="font-display text-2xl sm:text-3xl font-bold text-white">4.9<span class="text-amber-500">★</span></p>
+              <p class="text-white/50 text-xs mt-1">58 Reviews</p>
+            </div>
+            <div>
+              <p class="font-display text-2xl sm:text-3xl font-bold text-white">24/7</p>
+              <p class="text-white/50 text-xs mt-1">Availability</p>
+            </div>
+            <div>
+              <p class="font-display text-2xl sm:text-3xl font-bold text-white">5+</p>
+              <p class="text-white/50 text-xs mt-1">Service Categories</p>
+            </div>
+          </div>
         </div>
 
-        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-bold text-white leading-tight">
-          Building Trust,<br>
-          <span class="text-amber-500">One Wall at a Time.</span>
-        </h1>
-        <p class="text-white/70 text-base sm:text-lg mt-5 max-w-md">
-          From foundation to finishing — D.K. Enterprises handles your construction, civil work, tiling, painting, plumbing and electrical needs across Navi Mumbai. Engineered right, delivered on time.
-        </p>
+        <!-- Right visual: real project photo -->
+        <div class="relative hidden lg:block">
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+            <img src="https://images.stockcake.com/public/c/5/3/c539d67e-881b-4fa3-b0d7-9ad8d6829986_large/teamwork-in-construction-stockcake.jpg" alt="D.K. Enterprises construction site" class="w-full h-[420px] object-cover">
+            <div class="absolute inset-0 bg-gradient-to-t from-navy-950/90 via-navy-950/10 to-transparent"></div>
+            <div class="absolute bottom-0 left-0 right-0 p-6">
+              <div class="flex items-center justify-between">
+                <div>
+                  <p class="text-white font-display font-semibold">On-site, Navi Mumbai</p>
+                  <p class="text-white/60 text-xs mt-0.5">Construction Engineering Team</p>
+                </div>
+                <span class="flex items-center gap-1.5 text-green-400 text-xs font-medium bg-navy-950/60 px-3 py-1.5 rounded-full">
+                  <span class="h-2 w-2 rounded-full bg-green-400 pulse-dot"></span> Active Now
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
-        <div class="flex flex-wrap gap-3 mt-8">
-          <a href="contact.html" class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-3.5 rounded-lg transition shadow-lg shadow-amber-600/20">
-            Get Free Quote
+    <!-- ===== TRUST BAR ===== -->
+    <section class="bg-white border-b border-navy-900/5">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-navy-900/70 text-sm font-medium">
+        <span class="flex items-center gap-2"><svg class="h-4 w-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1l2.6 5.9L19 8l-4.5 4.4L15.5 19 10 15.8 4.5 19l1-6.6L1 8l6.4-1.1L10 1z"/></svg> 4.9 / 5 Google Rating</span>
+        <span class="hidden sm:inline text-navy-900/20">|</span>
+        <span>Licensed &amp; Insured Contractor</span>
+        <span class="hidden sm:inline text-navy-900/20">|</span>
+        <span>On-Time Project Delivery</span>
+        <span class="hidden sm:inline text-navy-900/20">|</span>
+        <span>Transparent, Written Estimates</span>
+      </div>
+    </section>
+
+    <!-- ===== WHY CHOOSE US ===== -->
+    <section class="bg-[#F8F7F4] blueprint-grid-light">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div class="max-w-2xl mb-12 reveal">
+          <p class="text-amber-600 font-semibold text-sm tracking-wider mb-2">WHY CHOOSE D.K. ENTERPRISES</p>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-navy-950">Local contractor. Engineering discipline.</h2>
+          <p class="text-navy-900/60 mt-3">We bring site-engineering standards to everyday home and commercial civil work — so nothing gets left to guesswork.</p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
+            <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.42A12.02 12.02 0 0121 14m-9 0l-9-5m9 5v7"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-navy-950 mb-1.5">Skilled Engineers</h3>
+            <p class="text-navy-900/60 text-sm">Trained civil engineers and tradesmen on every site, not just labour contractors.</p>
+          </div>
+
+          <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
+            <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-navy-950 mb-1.5">Quality Materials</h3>
+            <p class="text-navy-900/60 text-sm">We source from trusted brands only — no compromise on cement, tiles, wiring or fittings.</p>
+          </div>
+
+          <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
+            <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-navy-950 mb-1.5">On-Time Delivery</h3>
+            <p class="text-navy-900/60 text-sm">Clear timelines fixed at quotation stage and tracked till final handover.</p>
+          </div>
+
+          <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
+            <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+            </div>
+            <h3 class="font-display font-bold text-navy-950 mb-1.5">24/7 Emergency Support</h3>
+            <p class="text-navy-900/60 text-sm">Burst pipe at midnight? Power fault on a Sunday? We answer the call, every day, every hour.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SERVICES PREVIEW ===== -->
+    <section class="bg-white">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div class="flex flex-wrap items-end justify-between gap-4 mb-12 reveal">
+          <div>
+            <p class="text-amber-600 font-semibold text-sm tracking-wider mb-2">WHAT WE DO</p>
+            <h2 class="font-display text-3xl sm:text-4xl font-bold text-navy-950">Complete civil &amp; home services</h2>
+          </div>
+          <a href="#services" data-page="services" class="nav-link text-amber-600 font-semibold text-sm hover:text-amber-700 inline-flex items-center gap-1">
+            View all services
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
           </a>
-          <a href="https://wa.me/919819431734" target="_blank" rel="noopener" class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold px-6 py-3.5 rounded-lg transition">
+        </div>
+
+        <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
+          <a href="#services" data-page="services" class="nav-link reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
+            <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4 8 4v14M9 21V12h6v9"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Construction Engineering</h3>
+          </a>
+          <a href="#services" data-page="services" class="nav-link reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
+            <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V11l8-7 8 7v10M9 21V14h6v7"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">All Civil Work</h3>
+          </a>
+          <a href="#services" data-page="services" class="nav-link reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
+            <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Tiles &amp; Marble</h3>
+          </a>
+          <a href="#services" data-page="services" class="nav-link reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
+            <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21l4-4m0 0l7-7-3-3-7 7m3 3l-3-3m-2 9l-2-2 1-4 5 5-4 1z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Painting</h3>
+          </a>
+          <a href="#services" data-page="services" class="nav-link reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
+            <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Plumbing &amp; Electrical</h3>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TESTIMONIAL / SOCIAL PROOF ===== -->
+    <section class="bg-navy-950 relative overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div class="flex flex-col items-center text-center reveal">
+          <div class="flex gap-1 text-amber-500 mb-4">
+            <span>★★★★★</span>
+          </div>
+          <p class="text-white text-xl sm:text-2xl font-display font-medium max-w-2xl">
+            "Rated 4.9 out of 5 by 58 customers across Navi Mumbai for honest pricing and quality civil work."
+          </p>
+          <a href="https://www.google.com/maps?q=Vighnharta+temple+Sector+15+Kopar+Khairane+Navi+Mumbai" target="_blank" rel="noopener" class="mt-5 text-amber-500 text-sm font-semibold hover:text-amber-400 inline-flex items-center gap-1">
+            See our Google Reviews
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CTA BANNER ===== -->
+    <section class="bg-amber-600">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">Need civil work done right?</h2>
+          <p class="text-white/80 mt-1">Get a free, no-obligation site visit and quote today.</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="tel:+919819431734" class="bg-navy-950 hover:bg-navy-900 text-white font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Call Now</a>
+          <a href="#contact" data-page="contact" class="nav-link bg-white hover:bg-white/90 text-amber-700 font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Get Quote</a>
+        </div>
+      </div>
+    </section>
+
+  </section><!-- /page-home -->
+
+  <!-- ================================================================ -->
+  <!-- ===== PAGE: ABOUT ===== -->
+  <!-- ================================================================ -->
+  <section id="page-about" class="page-section">
+
+    <!-- ===== PAGE HERO ===== -->
+    <section class="relative bg-navy-950 overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="absolute -right-24 -top-24 h-96 w-96 bg-amber-600/20 rounded-full blur-3xl"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div class="max-w-2xl">
+          <p class="text-amber-500 font-semibold text-sm tracking-widest uppercase mb-3">About Us</p>
+          <h1 class="font-display text-4xl sm:text-5xl font-bold text-white leading-tight">
+            20+ Years of Building<br><span class="text-amber-500">Navi Mumbai's Trust</span>
+          </h1>
+          <p class="text-white/70 text-base sm:text-lg mt-5 max-w-xl">
+            From a single worker with a vision to one of Kopar Khairane's most trusted civil contractors — this is the D.K. Enterprises story.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== WHO WE ARE ===== -->
+    <section class="bg-[#F8F7F4] blueprint-grid-light">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 grid lg:grid-cols-2 gap-12 items-center">
+        <div class="reveal">
+          <p class="text-amber-600 font-semibold text-sm tracking-widest uppercase mb-3">Our Story</p>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-navy-950 mb-5">Built on Honesty &amp; Hard Work</h2>
+          <p class="text-navy-900/70 mb-4 leading-relaxed">
+            D.K. Enterprises was founded with one simple belief — every customer deserves quality civil work at a fair price, delivered on time. Starting from Kopar Khairane, we have grown to serve all of Navi Mumbai with the same dedication we had on day one.
+          </p>
+          <p class="text-navy-900/70 mb-6 leading-relaxed">
+            Our team of skilled masons, tilers, painters, plumbers and electricians brings decades of combined experience to every project — whether it's a 1 BHK renovation or a full commercial fit-out. We don't subcontract. Our people are our own trained crew.
+          </p>
+          <div class="flex flex-wrap gap-4">
+            <div class="bg-amber-600/10 border border-amber-600/20 rounded-xl px-5 py-4">
+              <p class="font-display font-bold text-3xl text-amber-600">20+</p>
+              <p class="text-sm text-navy-900/60 mt-0.5">Years Experience</p>
+            </div>
+            <div class="bg-amber-600/10 border border-amber-600/20 rounded-xl px-5 py-4">
+              <p class="font-display font-bold text-3xl text-amber-600">500+</p>
+              <p class="text-sm text-navy-900/60 mt-0.5">Projects Done</p>
+            </div>
+            <div class="bg-amber-600/10 border border-amber-600/20 rounded-xl px-5 py-4">
+              <p class="font-display font-bold text-3xl text-amber-600">4.9★</p>
+              <p class="text-sm text-navy-900/60 mt-0.5">Google Rating</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual side: real photo -->
+        <div class="reveal rounded-2xl overflow-hidden shadow-xl">
+          <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8Y29uc3RydWN0aW9uJTIwZW5naW5lZXJpbmd8ZW58MHx8MHx8fDA%3D" alt="D.K. Enterprises construction team at work" class="w-full h-[420px] object-cover">
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== WHY CHOOSE US ===== -->
+    <section class="bg-navy-950 relative overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div class="text-center mb-12 reveal">
+          <p class="text-amber-500 font-semibold text-sm tracking-widest uppercase mb-3">Why Choose Us</p>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-white">The D.K. Difference</h2>
+        </div>
+        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div class="reveal bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-amber-500/40 transition">
+            <div class="h-12 w-12 rounded-xl bg-amber-600 flex items-center justify-center mb-4">
+              <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-white mb-2">On-Time Delivery</h3>
+            <p class="text-white/60 text-sm leading-relaxed">We set a timeline, we stick to it. No excuses, no delays. Your project gets done when we say it will.</p>
+          </div>
+          <div class="reveal bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-amber-500/40 transition">
+            <div class="h-12 w-12 rounded-xl bg-amber-600 flex items-center justify-center mb-4">
+              <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-white mb-2">Transparent Pricing</h3>
+            <p class="text-white/60 text-sm leading-relaxed">Free site visit, written quotation. What we quote is what you pay — no hidden charges, no surprises.</p>
+          </div>
+          <div class="reveal bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-amber-500/40 transition">
+            <div class="h-12 w-12 rounded-xl bg-amber-600 flex items-center justify-center mb-4">
+              <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-white mb-2">24/7 Emergency Service</h3>
+            <p class="text-white/60 text-sm leading-relaxed">Pipe burst at midnight? Electrical fault on Sunday? We answer the call any time, any day.</p>
+          </div>
+          <div class="reveal bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-amber-500/40 transition">
+            <div class="h-12 w-12 rounded-xl bg-amber-600 flex items-center justify-center mb-4">
+              <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-white mb-2">Quality Materials Only</h3>
+            <p class="text-white/60 text-sm leading-relaxed">We source branded cement, tiles, paints and fittings. We never cut corners on materials.</p>
+          </div>
+          <div class="reveal bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-amber-500/40 transition">
+            <div class="h-12 w-12 rounded-xl bg-amber-600 flex items-center justify-center mb-4">
+              <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-white mb-2">Own Skilled Workforce</h3>
+            <p class="text-white/60 text-sm leading-relaxed">All our workers are our own trained team — not outsourced labor. Consistent quality on every project.</p>
+          </div>
+          <div class="reveal bg-white/5 border border-white/10 rounded-2xl p-6 hover:border-amber-500/40 transition">
+            <div class="h-12 w-12 rounded-xl bg-amber-600 flex items-center justify-center mb-4">
+              <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-white mb-2">4.9★ on Google</h3>
+            <p class="text-white/60 text-sm leading-relaxed">58 verified reviews from real customers across Navi Mumbai. We let our work speak for itself.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== JOURNEY TIMELINE ===== -->
+    <section class="bg-[#F8F7F4] blueprint-grid-light">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div class="text-center mb-12 reveal">
+          <p class="text-amber-600 font-semibold text-sm tracking-widest uppercase mb-3">Our Journey</p>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-navy-950">Milestones Along the Way</h2>
+        </div>
+        <div class="relative border-l-2 border-amber-600/30 pl-8 space-y-10">
+          <div class="reveal relative timeline-item">
+            <p class="text-amber-600 font-bold text-sm mb-1">2003</p>
+            <h3 class="font-display font-semibold text-navy-950 mb-1">Founded in Kopar Khairane</h3>
+            <p class="text-navy-900/60 text-sm leading-relaxed">Started with a small team taking on local tiling and plumbing jobs in Sector 15.</p>
+          </div>
+          <div class="reveal relative timeline-item">
+            <p class="text-amber-600 font-bold text-sm mb-1">2008</p>
+            <h3 class="font-display font-semibold text-navy-950 mb-1">Expanded to Full Civil Contracting</h3>
+            <p class="text-navy-900/60 text-sm leading-relaxed">Added construction engineering and complete renovation capabilities, growing team to 15+ workers.</p>
+          </div>
+          <div class="reveal relative timeline-item">
+            <p class="text-amber-600 font-bold text-sm mb-1">2015</p>
+            <h3 class="font-display font-semibold text-navy-950 mb-1">200+ Projects Milestone</h3>
+            <p class="text-navy-900/60 text-sm leading-relaxed">Crossed 200 completed projects across residential, commercial and industrial categories.</p>
+          </div>
+          <div class="reveal relative timeline-item">
+            <p class="text-amber-600 font-bold text-sm mb-1">2020</p>
+            <h3 class="font-display font-semibold text-navy-950 mb-1">Google Business — 4.9★ Rating</h3>
+            <p class="text-navy-900/60 text-sm leading-relaxed">Officially listed on Google Maps with verified reviews, maintaining a 4.9 star rating.</p>
+          </div>
+          <div class="reveal relative timeline-item">
+            <p class="text-amber-600 font-bold text-sm mb-1">Today</p>
+            <h3 class="font-display font-semibold text-navy-950 mb-1">500+ Projects, All of Navi Mumbai</h3>
+            <p class="text-navy-900/60 text-sm leading-relaxed">Serving every node of Navi Mumbai with 24/7 availability and a growing team of dedicated professionals.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== CTA BANNER ===== -->
+    <section class="bg-amber-600">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">Ready to start your project?</h2>
+          <p class="text-white/80 mt-1">Free site visit and written quote — no obligations, no pressure.</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="tel:+919819431734" class="bg-navy-950 hover:bg-navy-900 text-white font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Call Now</a>
+          <a href="#contact" data-page="contact" class="nav-link bg-white hover:bg-white/90 text-amber-700 font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Get Quote</a>
+        </div>
+      </div>
+    </section>
+
+  </section><!-- /page-about -->
+
+  <!-- ================================================================ -->
+  <!-- ===== PAGE: SERVICES ===== -->
+  <!-- ================================================================ -->
+  <section id="page-services" class="page-section">
+
+    <!-- ===== PAGE HERO ===== -->
+    <section class="relative bg-navy-950 overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20 text-center">
+        <p class="text-amber-500 font-semibold text-sm tracking-wider mb-3">OUR SERVICES</p>
+        <h1 class="font-display text-3xl sm:text-5xl font-bold text-white">Civil work, done end to end.</h1>
+        <p class="text-white/60 mt-4 max-w-xl mx-auto">Five specialised trades, one contractor. Every job is quoted, scheduled and supervised by D.K. Enterprises.</p>
+      </div>
+    </section>
+
+    <!-- ===== SERVICES GRID ===== -->
+    <section class="bg-[#F8F7F4]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- 1. Construction Engineering -->
+        <div class="reveal bg-white rounded-2xl border border-navy-900/5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
+          <img src="https://images.unsplash.com/photo-1541888946425-d81bb19240f5?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8Y29uc3RydWN0aW9uJTIwZW5naW5lZXJpbmd8ZW58MHx8MHx8fDA%3D" alt="Construction Engineering" class="w-full h-44 object-cover">
+          <div class="p-7 flex flex-col flex-1">
+            <div class="h-14 w-14 rounded-xl bg-navy-950 flex items-center justify-center text-amber-500 mb-5 -mt-14 relative z-10 border-4 border-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4 8 4v14M9 21V12h6v9"/></svg>
+            </div>
+            <h3 class="font-display text-xl font-bold text-navy-950 mb-2">Construction Engineering</h3>
+            <p class="text-navy-900/60 text-sm mb-5">Structural planning and execution for residential and commercial builds, from layout to final structure.</p>
+            <ul class="text-sm text-navy-900/70 space-y-2 mb-6">
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> New building &amp; extension work</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> RCC &amp; foundation work</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Structural repair &amp; strengthening</li>
+            </ul>
+            <a href="#contact" data-page="contact" class="nav-link mt-auto inline-flex items-center gap-1.5 text-amber-600 font-semibold text-sm hover:text-amber-700">Request Quote
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 2. All Civil Work -->
+        <div class="reveal bg-white rounded-2xl border border-navy-900/5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
+          <img src="https://images.unsplash.com/photo-1563166423-482a8c14b2d6?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGFsbCUyMGNpdmlsJTIwd29ya3xlbnwwfHwwfHx8MA%3D%3D" alt="All Civil Work renovation" class="w-full h-44 object-cover">
+          <div class="p-7 flex flex-col flex-1">
+            <div class="h-14 w-14 rounded-xl bg-navy-950 flex items-center justify-center text-amber-500 mb-5 -mt-14 relative z-10 border-4 border-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V11l8-7 8 7v10M9 21V14h6v7"/></svg>
+            </div>
+            <h3 class="font-display text-xl font-bold text-navy-950 mb-2">All Civil Work</h3>
+            <p class="text-navy-900/60 text-sm mb-5">General civil contracting for renovation, masonry and finishing work across homes and offices.</p>
+            <ul class="text-sm text-navy-900/70 space-y-2 mb-6">
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Brickwork &amp; plastering</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Waterproofing &amp; leakage repair</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Home &amp; office renovation</li>
+            </ul>
+            <a href="#contact" data-page="contact" class="nav-link mt-auto inline-flex items-center gap-1.5 text-amber-600 font-semibold text-sm hover:text-amber-700">Request Quote
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 3. Tiles & Marble -->
+        <div class="reveal bg-white rounded-2xl border border-navy-900/5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
+          <img src="https://plus.unsplash.com/premium_photo-1683121304531-8d12ffd0c8f5?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MXx8dGlsZXMlMjBhbmQlMjBtYXJibGVzJTIwaW5zdGFsbGF0aW9ufGVufDB8fDB8fHww" alt="Tiles and Marble Installation" class="w-full h-44 object-cover">
+          <div class="p-7 flex flex-col flex-1">
+            <div class="h-14 w-14 rounded-xl bg-navy-950 flex items-center justify-center text-amber-500 mb-5 -mt-14 relative z-10 border-4 border-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
+            </div>
+            <h3 class="font-display text-xl font-bold text-navy-950 mb-2">Tiles &amp; Marble Installation</h3>
+            <p class="text-navy-900/60 text-sm mb-5">Precision flooring and wall cladding using vitrified tiles, marble and granite for a finished, premium look.</p>
+            <ul class="text-sm text-navy-900/70 space-y-2 mb-6">
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Floor &amp; wall tiling</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Marble &amp; granite fitting</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Old tile removal &amp; re-flooring</li>
+            </ul>
+            <a href="#contact" data-page="contact" class="nav-link mt-auto inline-flex items-center gap-1.5 text-amber-600 font-semibold text-sm hover:text-amber-700">Request Quote
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 4. Painting -->
+        <div class="reveal bg-white rounded-2xl border border-navy-900/5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
+          <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAEGKznPgJ5S9uoiSSXXMxZVALlNQzjOe_CkW5RNs2jbJUXVl3mTQ43oKUaRHcyzlCFqCPPmAOWc2Zcdx66aCCv4GiJMSCXZfYjTKfygCm5JT9Q5P3Xm3S4jhQSVKIVLIm9uAIRyqw=s220-w165-h220-n-k-no" alt="Interior and exterior painting" class="w-full h-44 object-cover">
+          <div class="p-7 flex flex-col flex-1">
+            <div class="h-14 w-14 rounded-xl bg-navy-950 flex items-center justify-center text-amber-500 mb-5 -mt-14 relative z-10 border-4 border-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21l4-4m0 0l7-7-3-3-7 7m3 3l-3-3m-2 9l-2-2 1-4 5 5-4 1z"/></svg>
+            </div>
+            <h3 class="font-display text-xl font-bold text-navy-950 mb-2">Painting</h3>
+            <p class="text-navy-900/60 text-sm mb-5">Interior and exterior painting with proper surface prep, putty work and weatherproof finishes.</p>
+            <ul class="text-sm text-navy-900/70 space-y-2 mb-6">
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Interior wall &amp; ceiling painting</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Exterior &amp; waterproof coating</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Putty, primer &amp; texture finishes</li>
+            </ul>
+            <a href="#contact" data-page="contact" class="nav-link mt-auto inline-flex items-center gap-1.5 text-amber-600 font-semibold text-sm hover:text-amber-700">Request Quote
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 5. Plumbing -->
+        <div class="reveal bg-white rounded-2xl border border-navy-900/5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
+          <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAGrV-P0RdcbZXGI9QeRBYITs92pwTgkNc9PWtjNNdeThtw3O6DZV2E7cCMvMUalXn157ZzaWv7Mlbmj-MqqTuAh3sQx3D7eyLwuoX2qEpt12bMsljYSeMB_E77O2TRPpMOav9jf=s220-w165-h220-n-k-no" alt="Plumbing work" class="w-full h-44 object-cover">
+          <div class="p-7 flex flex-col flex-1">
+            <div class="h-14 w-14 rounded-xl bg-navy-950 flex items-center justify-center text-amber-500 mb-5 -mt-14 relative z-10 border-4 border-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M5 21V9a2 2 0 012-2h10a2 2 0 012 2v12M5 21h14M9 21v-6h6v6"/></svg>
+            </div>
+            <h3 class="font-display text-xl font-bold text-navy-950 mb-2">Plumbing</h3>
+            <p class="text-navy-900/60 text-sm mb-5">Complete plumbing line work, fixture installation and leak fixes for kitchens, bathrooms and terraces.</p>
+            <ul class="text-sm text-navy-900/70 space-y-2 mb-6">
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> New pipeline fitting</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Bathroom &amp; kitchen fittings</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Leakage &amp; blockage repair (24/7)</li>
+            </ul>
+            <a href="#contact" data-page="contact" class="nav-link mt-auto inline-flex items-center gap-1.5 text-amber-600 font-semibold text-sm hover:text-amber-700">Request Quote
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- 6. Electrical -->
+        <div class="reveal bg-white rounded-2xl border border-navy-900/5 overflow-hidden hover:shadow-xl hover:-translate-y-1 transition flex flex-col">
+          <img src="https://source.unsplash.com/600x440/?electrician,wiring,electrical" alt="Electrical wiring work" class="w-full h-44 object-cover">
+          <div class="p-7 flex flex-col flex-1">
+            <div class="h-14 w-14 rounded-xl bg-navy-950 flex items-center justify-center text-amber-500 mb-5 -mt-14 relative z-10 border-4 border-white shadow-lg">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
+            </div>
+            <h3 class="font-display text-xl font-bold text-navy-950 mb-2">Electrical Work</h3>
+            <p class="text-navy-900/60 text-sm mb-5">Safe, code-compliant wiring and fitting for new construction, renovation and emergency faults.</p>
+            <ul class="text-sm text-navy-900/70 space-y-2 mb-6">
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Complete house wiring</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Switchboard &amp; MCB installation</li>
+              <li class="flex gap-2"><svg class="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.7-9.3a1 1 0 00-1.4-1.4L9 10.6 7.7 9.3a1 1 0 00-1.4 1.4l2 2a1 1 0 001.4 0l4-4z"/></svg> Fault finding &amp; emergency repair</li>
+            </ul>
+            <a href="#contact" data-page="contact" class="nav-link mt-auto inline-flex items-center gap-1.5 text-amber-600 font-semibold text-sm hover:text-amber-700">Request Quote
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ===== CTA BANNER ===== -->
+    <section class="bg-amber-600">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">Don't see what you need?</h2>
+          <p class="text-white/80 mt-1">Tell us the job — we'll quote it. Free site visit across Navi Mumbai.</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="tel:+919819431734" class="bg-navy-950 hover:bg-navy-900 text-white font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Call Now</a>
+          <a href="#contact" data-page="contact" class="nav-link bg-white hover:bg-white/90 text-amber-700 font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Get Quote</a>
+        </div>
+      </div>
+    </section>
+
+  </section><!-- /page-services -->
+
+  <!-- ================================================================ -->
+  <!-- ===== PAGE: GALLERY ===== -->
+  <!-- ================================================================ -->
+  <section id="page-gallery" class="page-section">
+
+    <!-- ===== PAGE HERO ===== -->
+    <section class="relative bg-navy-950 overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="absolute -right-24 -top-24 h-96 w-96 bg-amber-600/20 rounded-full blur-3xl"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div class="max-w-2xl">
+          <p class="text-amber-500 font-semibold text-sm tracking-widest uppercase mb-3">Our Work</p>
+          <h1 class="font-display text-4xl sm:text-5xl font-bold text-white leading-tight">
+            Project Gallery
+          </h1>
+          <p class="text-white/70 text-base sm:text-lg mt-5 max-w-xl">
+            500+ projects completed across Navi Mumbai. Every photo tells a story of quality work, happy clients, and jobs done right.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== GALLERY ===== -->
+    <section class="bg-[#F8F7F4] blueprint-grid-light">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+
+        <!-- Filter Tabs -->
+        <div class="reveal flex flex-wrap gap-2 mb-8">
+          <button class="filter-btn active font-semibold text-sm px-5 py-2 rounded-full" data-filter="all">All Projects</button>
+          <button class="filter-btn font-semibold text-sm px-5 py-2 rounded-full" data-filter="construction">Construction</button>
+          <button class="filter-btn font-semibold text-sm px-5 py-2 rounded-full" data-filter="tiles">Tiles &amp; Marble</button>
+          <button class="filter-btn font-semibold text-sm px-5 py-2 rounded-full" data-filter="painting">Painting</button>
+          <button class="filter-btn font-semibold text-sm px-5 py-2 rounded-full" data-filter="plumbing">Plumbing</button>
+          <button class="filter-btn font-semibold text-sm px-5 py-2 rounded-full" data-filter="electrical">Electrical</button>
+        </div>
+
+        <!-- Grid -->
+        <div id="galleryGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
+          <!-- Construction -->
+          <div class="gallery-card reveal" data-category="construction" data-title="Residential Construction — Kopar Khairane" data-img="https://source.unsplash.com/900x600/?construction,site,building">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAEYfYPNf81DuFXT-jtL2xiJifEsu_sHeL8XrriSi9MSxRqFvix9_wgPi0Am5VBc-Y43o6t4ah_7N0yfudh1znkj0Nge_R0fC_iFutyaELhdBcouYBfSR4xJ5u9mtAWgtsqjxB90gBuZ-jS2=s220-w165-h220-n-k-no" alt="Residential Construction Kopar Khairane" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Construction</p>
+                <p class="text-white font-display font-semibold text-sm">Residential Construction — Kopar Khairane</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card reveal" data-category="construction" data-title="Commercial Build-out — Vashi" data-img="https://source.unsplash.com/900x600/?commercial,building,construction">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAGX-cIwNUY4PzrhRlZBcpPFtviROZzxx88bADmD2n5_7-DTVIH69PloNgXabSLXD7gwdRCpGBur3BIAirkaQmVH15aFOy2Vprz2EjP4LlVdOyn833QXNCKDFrt1FtAwnkNg7q-F6A=s294-w294-h220-n-k-no" alt="Commercial Build-out Vashi" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Construction</p>
+                <p class="text-white font-display font-semibold text-sm">Commercial Build-out — Vashi</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card reveal" data-category="construction" data-title="Column & Beam Work — Airoli" data-img="https://source.unsplash.com/900x600/?rcc,column,beam,structure">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAHA2GN2-gqx3OlL30QogaFZm2aPBVT_7uZeq5eIACjs8dbjVtpfmHo7MiXUs8l76zp8_oWtA29EctPH5-L5439eFr6KDIpxmsuCRzvx6R5I1ph_7ClWwTFswvdG7iDN8sPTlq-eaHMkN-fh=s220-w165-h220-n-k-no" alt="Column and Beam Work Airoli" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Construction</p>
+                <p class="text-white font-display font-semibold text-sm">Column &amp; Beam Work — Airoli</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tiles -->
+          <div class="gallery-card reveal" data-category="tiles" data-title="Italian Marble Flooring — Nerul" data-img="https://source.unsplash.com/900x600/?marble,flooring,tiles">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAHcvJpFdm1uzM1V4EFWtWRNGQETot3grkRxqpco5A_R7SJPyx0J0_f1v0umoF_n861lmDpc3pEk60WJ3gQ5ybPmC1-rYZ2w2PHBPM8zdNdxBySzC3lz0ONCADJIj1xD1bdDjNkUqH27PNVx=s220-w165-h220-n-k-no" alt="Italian Marble Flooring Nerul" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Tiles &amp; Marble</p>
+                <p class="text-white font-display font-semibold text-sm">Italian Marble Flooring — Nerul</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card reveal" data-category="tiles" data-title="Kitchen Ceramic Tiles — Kharghar" data-img="https://source.unsplash.com/900x600/?kitchen,tiles,interior">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAGX-cIwNUY4PzrhRlZBcpPFtviROZzxx88bADmD2n5_7-DTVIH69PloNgXabSLXD7gwdRCpGBur3BIAirkaQmVH15aFOy2Vprz2EjP4LlVdOyn833QXNCKDFrt1FtAwnkNg7q-F6A=s294-w294-h220-n-k-no" alt="Kitchen Ceramic Tiles Kharghar" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Tiles &amp; Marble</p>
+                <p class="text-white font-display font-semibold text-sm">Kitchen Ceramic Tiles — Kharghar</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card reveal" data-category="tiles" data-title="Bathroom Tiling — Belapur" data-img="https://source.unsplash.com/900x600/?bathroom,tiles">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAFFHKn-Q8Xjdw0UHZevDfqIZpsFzroY9llOfEMOTWMkASpgVYSp8RdUAhGU3umIPP2-mtFv8Op3fmk_kiBpXAJ-IoGs3JILlYz43X_05cprKCFuYwU7DLGYhRZ6pgxDts7r9UHTybOyzHtf=s680-w680-h510-rw" alt="Bathroom Tiling Belapur" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Tiles &amp; Marble</p>
+                <p class="text-white font-display font-semibold text-sm">Bathroom Tiling — Belapur</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Painting -->
+          <div class="gallery-card reveal" data-category="painting" data-title="Full Home Painting — Panvel" data-img="https://source.unsplash.com/900x600/?wall,painting,interior">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAEGKznPgJ5S9uoiSSXXMxZVALlNQzjOe_CkW5RNs2jbJUXVl3mTQ43oKUaRHcyzlCFqCPPmAOWc2Zcdx66aCCv4GiJMSCXZfYjTKfygCm5JT9Q5P3Xm3S4jhQSVKIVLIm9uAIRyqw=s220-w165-h220-n-k-no" alt="Full Home Painting Panvel" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Painting</p>
+                <p class="text-white font-display font-semibold text-sm">Full Home Painting — Panvel</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card reveal" data-category="painting" data-title="Texture Finish — Ghansoli" data-img="https://source.unsplash.com/900x600/?texture,wall,paint">
+            <img src="https://source.unsplash.com/700x500/?texture,wall,paint" alt="Texture Finish Ghansoli" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Painting</p>
+                <p class="text-white font-display font-semibold text-sm">Texture Finish — Ghansoli</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Plumbing -->
+          <div class="gallery-card reveal" data-category="plumbing" data-title="Complete Plumbing — Turbhe" data-img="https://source.unsplash.com/900x600/?plumbing,pipe,plumber">
+            <img src="https://lh3.googleusercontent.com/gps-cs-s/APNQkAHTF3AD1aIyKIdDwli3X4p64YGWTwLY7_R_xI-hiXm1XSzeh7vbMLI6CZppgP7KpXpz9Us_DLQ7Qt0edybd6046C0iJa6n2_4y89uIO-rnXa1UaOPHct5skM54pTEfZj4UD7-e0M60fyNj-=s220-w165-h220-n-k-no" alt="Complete Plumbing Turbhe" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Plumbing</p>
+                <p class="text-white font-display font-semibold text-sm">Complete Plumbing — Turbhe</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Electrical -->
+          <div class="gallery-card reveal" data-category="electrical" data-title="Full House Wiring — Sanpada" data-img="https://source.unsplash.com/900x600/?electrician,wiring,electrical">
+            <img src="https://source.unsplash.com/700x500/?electrician,wiring,electrical" alt="Full House Wiring Sanpada" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Electrical</p>
+                <p class="text-white font-display font-semibold text-sm">Full House Wiring — Sanpada</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card reveal" data-category="construction" data-title="Full Renovation — Rabale" data-img="https://source.unsplash.com/900x600/?construction,workers,team">
+            <img src="https://source.unsplash.com/700x500/?construction,workers,team" alt="Full Renovation Rabale" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Construction</p>
+                <p class="text-white font-display font-semibold text-sm">Full Renovation — Rabale</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="gallery-card reveal" data-category="tiles" data-title="Outdoor Paving — Ulwe" data-img="https://source.unsplash.com/900x600/?paving,outdoor,stone">
+            <img src="https://source.unsplash.com/700x500/?paving,outdoor,stone" alt="Outdoor Paving Ulwe" loading="lazy">
+            <div class="overlay">
+              <div>
+                <p class="text-amber-400 text-xs font-semibold uppercase tracking-wide mb-1">Tiles &amp; Marble</p>
+                <p class="text-white font-display font-semibold text-sm">Outdoor Paving — Ulwe</p>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /galleryGrid -->
+
+        <!-- WhatsApp CTA below gallery -->
+        <div class="reveal mt-12 text-center">
+          <p class="text-navy-900/60 mb-4">Want to see more project photos? Send us a WhatsApp message.</p>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20want%20to%20see%20more%20project%20photos" target="_blank" rel="noopener"
+            class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3.5 rounded-lg transition">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-1 1.1-.2.2-.4.2-.7.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.8-1.6.1-.2 0-.4-.1-.5-.1-.2-.7-1.7-1-2.3-.2-.6-.4-.5-.7-.5h-.6c-.2 0-.6.1-.8.4-.3.3-1.1 1.1-1.1 2.6 0 1.5 1.1 3 1.3 3.2.2.2 2 3.2 5 4.4 2.5 1 3 .8 3.5.8.5 0 1.7-.7 1.9-1.4.2-.6.2-1.2.2-1.3 0-.1-.2-.2-.4-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
-            WhatsApp Us
+            View More on WhatsApp
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== LIGHTBOX ===== -->
+    <div id="lightbox">
+      <div style="max-width:90vw;max-height:90vh;position:relative;text-align:center;">
+        <div id="lbContent" style="color:white;"></div>
+        <button id="lbClose" style="position:absolute;top:-48px;right:0;background:none;border:none;color:white;font-size:2rem;cursor:pointer;line-height:1;">✕</button>
+      </div>
+    </div>
+
+    <!-- ===== CTA BANNER ===== -->
+    <section class="bg-amber-600">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+        <div>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">Like what you see?</h2>
+          <p class="text-white/80 mt-1">Get a free quote for your project — we'll visit your site within 24 hours.</p>
+        </div>
+        <div class="flex gap-3">
+          <a href="tel:+919819431734" class="bg-navy-950 hover:bg-navy-900 text-white font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Call Now</a>
+          <a href="#contact" data-page="contact" class="nav-link bg-white hover:bg-white/90 text-amber-700 font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Get Quote</a>
+        </div>
+      </div>
+    </section>
+
+  </section><!-- /page-gallery -->
+
+  <!-- ================================================================ -->
+  <!-- ===== PAGE: SERVICE AREA ===== -->
+  <!-- ================================================================ -->
+  <section id="page-service-area" class="page-section">
+
+    <!-- ===== PAGE HERO ===== -->
+    <section class="relative bg-navy-950 overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="absolute -right-24 -top-24 h-96 w-96 bg-amber-600/20 rounded-full blur-3xl"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div class="max-w-2xl">
+          <p class="text-amber-500 font-semibold text-sm tracking-widest uppercase mb-3">Service Area</p>
+          <h1 class="font-display text-4xl sm:text-5xl font-bold text-white leading-tight">
+            Serving All of<br><span class="text-amber-500">Navi Mumbai</span>
+          </h1>
+          <p class="text-white/70 text-base sm:text-lg mt-5 max-w-xl">
+            From our base in Kopar Khairane, we reach every node of Navi Mumbai — fast response, free site visits, 24/7.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== AREAS GRID ===== -->
+    <section class="bg-[#F8F7F4] blueprint-grid-light">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+
+        <div class="reveal mb-10 text-center max-w-xl mx-auto">
+          <p class="text-amber-600 font-semibold text-sm tracking-widest uppercase mb-3">Where We Work</p>
+          <h2 class="font-display text-3xl sm:text-4xl font-bold text-navy-950">Tap your area to message us on WhatsApp</h2>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 mb-14">
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Kopar%20Khairane" target="_blank" rel="noopener"
+            class="area-card primary reveal rounded-xl border-2 p-5 block group">
+            <div class="mb-3"><svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Kopar Khairane</h3>
+            <p class="text-amber-600 text-xs mt-1 font-medium">Home Base</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Vashi" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Vashi</h3>
+            <p class="text-navy-900/40 text-xs mt-1">10 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Nerul" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Nerul</h3>
+            <p class="text-navy-900/40 text-xs mt-1">15 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Airoli" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Airoli</h3>
+            <p class="text-navy-900/40 text-xs mt-1">12 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Ghansoli" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Ghansoli</h3>
+            <p class="text-navy-900/40 text-xs mt-1">8 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Rabale" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Rabale</h3>
+            <p class="text-navy-900/40 text-xs mt-1">10 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Turbhe" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Turbhe</h3>
+            <p class="text-navy-900/40 text-xs mt-1">15 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Sanpada" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Sanpada</h3>
+            <p class="text-navy-900/40 text-xs mt-1">15 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Belapur" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Belapur</h3>
+            <p class="text-navy-900/40 text-xs mt-1">25 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Kharghar" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Kharghar</h3>
+            <p class="text-navy-900/40 text-xs mt-1">30 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Panvel" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Panvel</h3>
+            <p class="text-navy-900/40 text-xs mt-1">40 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Ulwe" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Ulwe</h3>
+            <p class="text-navy-900/40 text-xs mt-1">35 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Dronagiri" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Dronagiri</h3>
+            <p class="text-navy-900/40 text-xs mt-1">45 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20in%20Taloja" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border border-navy-900/10 bg-white p-5 block group hover:border-amber-600">
+            <div class="mb-3"><svg class="h-6 w-6 text-navy-900/30 group-hover:text-amber-600 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/></svg></div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Taloja</h3>
+            <p class="text-navy-900/40 text-xs mt-1">40 min away</p>
+          </a>
+          <a href="https://wa.me/919819431734?text=Hi%2C%20I%20need%20civil%20work%20and%20my%20area%20is%20not%20listed" target="_blank" rel="noopener"
+            class="area-card reveal rounded-xl border-2 border-dashed border-amber-600/40 bg-amber-600/5 p-5 block group hover:border-amber-600 hover:bg-amber-600/10">
+            <div class="mb-3">
+              <svg class="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h3 class="font-display font-semibold text-navy-950 text-sm">Not Listed?</h3>
+            <p class="text-amber-600 text-xs mt-1 font-medium">Ask us on WhatsApp</p>
           </a>
         </div>
 
-        <!-- stat strip -->
-        <div class="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/10 max-w-md">
-          <div>
-            <p class="font-display text-2xl sm:text-3xl font-bold text-white">4.9<span class="text-amber-500">★</span></p>
-            <p class="text-white/50 text-xs mt-1">58 Reviews</p>
-          </div>
-          <div>
-            <p class="font-display text-2xl sm:text-3xl font-bold text-white">24/7</p>
-            <p class="text-white/50 text-xs mt-1">Availability</p>
-          </div>
-          <div>
-            <p class="font-display text-2xl sm:text-3xl font-bold text-white">5+</p>
-            <p class="text-white/50 text-xs mt-1">Service Categories</p>
-          </div>
+        <!-- SEO Text Block -->
+        <div class="reveal bg-white rounded-2xl p-6 sm:p-8 shadow-sm">
+          <h2 class="font-display font-bold text-navy-950 text-lg mb-4">Civil Contractor Near You — Navi Mumbai</h2>
+          <p class="text-navy-900/60 text-sm leading-relaxed mb-3">
+            D.K. Enterprises is the trusted civil work contractor for residential and commercial projects across Navi Mumbai. Whether you need construction, tiling, painting, plumbing or electrical work in <strong class="text-navy-950">Kopar Khairane</strong>, <strong class="text-navy-950">Vashi</strong>, <strong class="text-navy-950">Nerul</strong>, <strong class="text-navy-950">Airoli</strong>, <strong class="text-navy-950">Ghansoli</strong>, <strong class="text-navy-950">Belapur</strong>, <strong class="text-navy-950">Kharghar</strong> or <strong class="text-navy-950">Panvel</strong> — we are available 24/7.
+          </p>
+          <p class="text-navy-900/60 text-sm leading-relaxed">
+            Our base in Sector 15, Kopar Khairane puts us at the heart of Navi Mumbai, allowing rapid response to all nodes. Free site visit. Written quotation. On-time delivery. 4.9★ Google rated.
+          </p>
         </div>
       </div>
+    </section>
 
-      <!-- Right visual: site-plan style card -->
-      <div class="relative hidden lg:block">
-        <div class="relative bg-navy-900 border border-white/10 rounded-2xl p-6 blueprint-grid shadow-2xl">
-          <div class="flex items-center justify-between mb-4">
-            <p class="text-white/50 text-xs font-mono tracking-wider">SITE PLAN — D.K. ENTERPRISES</p>
-            <span class="text-amber-500 text-xs font-mono">REV. 24/7</span>
-          </div>
-          <div class="space-y-3">
-            <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg p-3">
-              <div class="h-10 w-10 rounded bg-amber-600/20 flex items-center justify-center text-amber-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4 8 4v14M9 21V12h6v9"/></svg>
-              </div>
-              <div>
-                <p class="text-white text-sm font-semibold">Construction Engineering</p>
-                <p class="text-white/40 text-xs">Foundation to handover</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg p-3">
-              <div class="h-10 w-10 rounded bg-amber-600/20 flex items-center justify-center text-amber-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
-              </div>
-              <div>
-                <p class="text-white text-sm font-semibold">Tiles &amp; Marble</p>
-                <p class="text-white/40 text-xs">Precision flooring &amp; cladding</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 bg-white/5 border border-white/10 rounded-lg p-3">
-              <div class="h-10 w-10 rounded bg-amber-600/20 flex items-center justify-center text-amber-500">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-              </div>
-              <div>
-                <p class="text-white text-sm font-semibold">Electrical &amp; Plumbing</p>
-                <p class="text-white/40 text-xs">Safe, code-compliant fitting</p>
-              </div>
-            </div>
-          </div>
-          <div class="mt-5 pt-4 border-t border-dashed border-white/10 flex items-center justify-between">
-            <span class="text-white/40 text-xs font-mono">SCALE: ON-SITE VISIT</span>
-            <span class="flex items-center gap-1.5 text-green-400 text-xs font-medium">
-              <span class="h-2 w-2 rounded-full bg-green-400 pulse-dot"></span> Active Now
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== TRUST BAR ===== -->
-  <section class="bg-white border-b border-navy-900/5">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-navy-900/70 text-sm font-medium">
-      <span class="flex items-center gap-2"><svg class="h-4 w-4 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M10 1l2.6 5.9L19 8l-4.5 4.4L15.5 19 10 15.8 4.5 19l1-6.6L1 8l6.4-1.1L10 1z"/></svg> 4.9 / 5 Google Rating</span>
-      <span class="hidden sm:inline text-navy-900/20">|</span>
-      <span>Licensed &amp; Insured Contractor</span>
-      <span class="hidden sm:inline text-navy-900/20">|</span>
-      <span>On-Time Project Delivery</span>
-      <span class="hidden sm:inline text-navy-900/20">|</span>
-      <span>Transparent, Written Estimates</span>
-    </div>
-  </section>
-
-  <!-- ===== WHY CHOOSE US ===== -->
-  <section class="bg-[#F8F7F4] blueprint-grid-light">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-      <div class="max-w-2xl mb-12 reveal">
-        <p class="text-amber-600 font-semibold text-sm tracking-wider mb-2">WHY CHOOSE D.K. ENTERPRISES</p>
-        <h2 class="font-display text-3xl sm:text-4xl font-bold text-navy-950">Local contractor. Engineering discipline.</h2>
-        <p class="text-navy-900/60 mt-3">We bring site-engineering standards to everyday home and commercial civil work — so nothing gets left to guesswork.</p>
-      </div>
-
-      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
-          <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.42A12.02 12.02 0 0121 14m-9 0l-9-5m9 5v7"/></svg>
-          </div>
-          <h3 class="font-display font-bold text-navy-950 mb-1.5">Skilled Engineers</h3>
-          <p class="text-navy-900/60 text-sm">Trained civil engineers and tradesmen on every site, not just labour contractors.</p>
-        </div>
-
-        <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
-          <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          </div>
-          <h3 class="font-display font-bold text-navy-950 mb-1.5">Quality Materials</h3>
-          <p class="text-navy-900/60 text-sm">We source from trusted brands only — no compromise on cement, tiles, wiring or fittings.</p>
-        </div>
-
-        <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
-          <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </div>
-          <h3 class="font-display font-bold text-navy-950 mb-1.5">On-Time Delivery</h3>
-          <p class="text-navy-900/60 text-sm">Clear timelines fixed at quotation stage and tracked till final handover.</p>
-        </div>
-
-        <div class="reveal bg-white rounded-xl p-6 border border-navy-900/5 hover:border-amber-600/30 hover:shadow-lg transition">
-          <div class="h-12 w-12 rounded-lg bg-navy-950 flex items-center justify-center text-amber-500 mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          </div>
-          <h3 class="font-display font-bold text-navy-950 mb-1.5">24/7 Emergency Support</h3>
-          <p class="text-navy-900/60 text-sm">Burst pipe at midnight? Power fault on a Sunday? We answer the call, every day, every hour.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== SERVICES PREVIEW ===== -->
-  <section class="bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-24">
-      <div class="flex flex-wrap items-end justify-between gap-4 mb-12 reveal">
+    <!-- ===== CTA BANNER ===== -->
+    <section class="bg-amber-600">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
         <div>
-          <p class="text-amber-600 font-semibold text-sm tracking-wider mb-2">WHAT WE DO</p>
-          <h2 class="font-display text-3xl sm:text-4xl font-bold text-navy-950">Complete civil &amp; home services</h2>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">In your area? Let's talk.</h2>
+          <p class="text-white/80 mt-1">Free site visit anywhere in Navi Mumbai. Call or WhatsApp now.</p>
         </div>
-        <a href="services.html" class="text-amber-600 font-semibold text-sm hover:text-amber-700 inline-flex items-center gap-1">
-          View all services
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-        </a>
-      </div>
-
-      <div class="grid sm:grid-cols-2 lg:grid-cols-5 gap-5">
-        <a href="services.html" class="reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
-          <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21h18M5 21V7l8-4 8 4v14M9 21V12h6v9"/></svg>
-          </div>
-          <h3 class="font-display font-semibold text-navy-950 text-sm">Construction Engineering</h3>
-        </a>
-        <a href="services.html" class="reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
-          <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V11l8-7 8 7v10M9 21V14h6v7"/></svg>
-          </div>
-          <h3 class="font-display font-semibold text-navy-950 text-sm">All Civil Work</h3>
-        </a>
-        <a href="services.html" class="reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
-          <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4h7v7H4V4zm9 0h7v7h-7V4zM4 13h7v7H4v-7zm9 0h7v7h-7v-7z"/></svg>
-          </div>
-          <h3 class="font-display font-semibold text-navy-950 text-sm">Tiles &amp; Marble</h3>
-        </a>
-        <a href="services.html" class="reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
-          <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21l4-4m0 0l7-7-3-3-7 7m3 3l-3-3m-2 9l-2-2 1-4 5 5-4 1z"/></svg>
-          </div>
-          <h3 class="font-display font-semibold text-navy-950 text-sm">Painting</h3>
-        </a>
-        <a href="services.html" class="reveal group rounded-xl border border-navy-900/10 p-5 hover:border-amber-600 hover:shadow-xl transition">
-          <div class="h-11 w-11 rounded-lg bg-navy-950/5 group-hover:bg-amber-600 flex items-center justify-center text-navy-950 group-hover:text-white transition mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>
-          </div>
-          <h3 class="font-display font-semibold text-navy-950 text-sm">Plumbing &amp; Electrical</h3>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ===== TESTIMONIAL / SOCIAL PROOF ===== -->
-  <section class="bg-navy-950 relative overflow-hidden">
-    <div class="absolute inset-0 blueprint-grid"></div>
-    <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-      <div class="flex flex-col items-center text-center reveal">
-        <div class="flex gap-1 text-amber-500 mb-4">
-          <span>★★★★★</span>
+        <div class="flex gap-3">
+          <a href="tel:+919819431734" class="bg-navy-950 hover:bg-navy-900 text-white font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Call Now</a>
+          <a href="#contact" data-page="contact" class="nav-link bg-white hover:bg-white/90 text-amber-700 font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Get Quote</a>
         </div>
-        <p class="text-white text-xl sm:text-2xl font-display font-medium max-w-2xl">
-          "Rated 4.9 out of 5 by 58 customers across Navi Mumbai for honest pricing and quality civil work."
-        </p>
-        <a href="https://www.google.com/maps?q=Vighnharta+temple+Sector+15+Kopar+Khairane+Navi+Mumbai" target="_blank" rel="noopener" class="mt-5 text-amber-500 text-sm font-semibold hover:text-amber-400 inline-flex items-center gap-1">
-          See our Google Reviews
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
-        </a>
       </div>
-    </div>
-  </section>
+    </section>
 
-  <!-- ===== CTA BANNER ===== -->
-  <section class="bg-amber-600">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-12 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
-      <div>
-        <h2 class="font-display text-2xl sm:text-3xl font-bold text-white">Need civil work done right?</h2>
-        <p class="text-white/80 mt-1">Get a free, no-obligation site visit and quote today.</p>
+  </section><!-- /page-service-area -->
+
+  <!-- ================================================================ -->
+  <!-- ===== PAGE: FAQ ===== -->
+  <!-- ================================================================ -->
+  <section id="page-faq" class="page-section">
+
+    <!-- ===== PAGE HERO ===== -->
+    <section class="relative bg-navy-950 overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="absolute -right-24 -top-24 h-96 w-96 bg-amber-600/20 rounded-full blur-3xl"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+        <div class="max-w-2xl">
+          <p class="text-amber-500 font-semibold text-sm tracking-widest uppercase mb-3">FAQ</p>
+          <h1 class="font-display text-4xl sm:text-5xl font-bold text-white leading-tight">
+            Frequently Asked<br><span class="text-amber-500">Questions</span>
+          </h1>
+          <p class="text-white/70 text-base sm:text-lg mt-5 max-w-xl">
+            Got questions before booking? We've answered the most common ones below. Still not sure — just call or WhatsApp us.
+          </p>
+        </div>
       </div>
-      <div class="flex gap-3">
-        <a href="tel:+919819431734" class="bg-navy-950 hover:bg-navy-900 text-white font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Call Now</a>
-        <a href="contact.html" class="bg-white hover:bg-white/90 text-amber-700 font-semibold px-6 py-3.5 rounded-lg transition whitespace-nowrap">Get Quote</a>
+    </section>
+
+    <!-- ===== FAQ SECTIONS ===== -->
+    <section class="bg-[#F8F7F4] blueprint-grid-light">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6 py-16 sm:py-20 space-y-14">
+
+        <!-- Category: Pricing & Quotes -->
+        <div class="reveal">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-10 w-10 rounded-xl bg-amber-600 flex items-center justify-center flex-shrink-0">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="font-display font-bold text-xl text-navy-950">Pricing &amp; Quotes</h2>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-navy-950/5">
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Is the site visit and quotation free?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Yes, completely free. We visit your site, assess the work, and provide a written quotation — no charges, no pressure. You decide whether to proceed.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Will the final bill match the quotation?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Yes. We believe in transparent pricing. What we quote is what you pay. If any scope changes during the work, we discuss and agree with you before proceeding — no surprise charges.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">What payment methods do you accept?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                We accept cash, UPI (GPay, PhonePe, Paytm), and bank transfer. A small advance is required to start work; balance is paid on completion.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Do you charge for small repair jobs?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Yes, small jobs have minimum charges which we inform you about upfront. We take every job seriously, big or small, and price it fairly.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Category: Timelines -->
+        <div class="reveal">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-10 w-10 rounded-xl bg-amber-600 flex items-center justify-center flex-shrink-0">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            </div>
+            <h2 class="font-display font-bold text-xl text-navy-950">Project Timelines</h2>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-navy-950/5">
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">How long does a full flat renovation take?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                A standard 2BHK full renovation typically takes 3–5 weeks depending on scope. We provide an accurate timeline during the site visit and stick to it. Major construction projects are planned separately.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">How quickly can you start after confirming the job?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                For most jobs we can start within 2–3 days of confirmation. Emergency repairs can be attended the same day or next day depending on the situation.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Do you work on weekends and public holidays?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Yes. We are available 7 days a week including Sundays and public holidays, especially for emergencies. Scheduled project work runs Monday to Saturday.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Category: Materials & Quality -->
+        <div class="reveal">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-10 w-10 rounded-xl bg-amber-600 flex items-center justify-center flex-shrink-0">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+            </div>
+            <h2 class="font-display font-bold text-xl text-navy-950">Materials &amp; Quality</h2>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-navy-950/5">
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Do you supply materials or should I arrange them?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                We can handle both. We procure quality materials at competitive prices (cement, tiles, paints, fittings) and include cost in the quote. Or if you prefer to buy your own, we work with customer-supplied materials too.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">What brands of paint and cement do you use?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                We use trusted brands — Asian Paints / Berger for painting, Ultratech / ACC for cement, CP / Jaquar for sanitary fittings. We never substitute with cheaper alternatives without your knowledge.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Do you provide a warranty on your work?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Yes. We provide a workmanship warranty — if any defect arises due to our work within the agreed period, we fix it free of charge. Details are discussed at the time of quotation.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Category: Service Area -->
+        <div class="reveal">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-10 w-10 rounded-xl bg-amber-600 flex items-center justify-center flex-shrink-0">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+            </div>
+            <h2 class="font-display font-bold text-xl text-navy-950">Service Area</h2>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-navy-950/5">
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Where do you operate in Navi Mumbai?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                We cover all nodes of Navi Mumbai — Kopar Khairane, Vashi, Nerul, Belapur, Kharghar, Panvel, Airoli, Ghansoli, Rabale, Turbhe, Sanpada, Ulwe and more. See our <a href="#service-area" data-page="service-area" class="nav-link text-amber-600 font-medium hover:underline">Service Area page</a> for the full list.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Do you serve Mumbai city as well?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Our primary area is Navi Mumbai, but for large projects we do consider Mumbai city and surrounding areas like Thane and Panvel district. Call us to discuss your location.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Category: Process -->
+        <div class="reveal">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="h-10 w-10 rounded-xl bg-amber-600 flex items-center justify-center flex-shrink-0">
+              <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+            </div>
+            <h2 class="font-display font-bold text-xl text-navy-950">Process &amp; Team</h2>
+          </div>
+          <div class="bg-white rounded-2xl shadow-sm overflow-hidden divide-y divide-navy-950/5">
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Do you use your own workers or outsource?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                All our workers are our own trained team — we do not subcontract. This ensures consistent quality, accountability and the same level of professionalism on every project.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">Will someone supervise the work daily?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Yes. Our site supervisor visits daily to check quality and resolve any issues. For larger projects, a dedicated supervisor is assigned throughout the duration of the job.
+              </div>
+            </div>
+
+            <div class="faq-item">
+              <button class="faq-btn w-full flex items-center justify-between gap-4 px-6 py-5 text-left">
+                <span class="font-display font-semibold text-navy-950 text-sm sm:text-base">How do I book or contact you?</span>
+                <svg class="faq-icon h-5 w-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              </button>
+              <div class="faq-answer px-6 text-navy-900/70 text-sm leading-relaxed pb-5">
+                Call or WhatsApp us at <a href="tel:+919819431734" class="text-amber-600 font-medium">098194 31734</a> anytime. You can also fill the quote form on our <a href="#contact" data-page="contact" class="nav-link text-amber-600 font-medium hover:underline">Contact page</a> and we'll get back to you within a few hours.
+              </div>
+            </div>
+
+          </div>
+        </div>
+
       </div>
-    </div>
-  </section>
+    </section>
+
+    <!-- ===== STILL HAVE QUESTIONS ===== -->
+    <section class="bg-navy-950 relative overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="relative max-w-2xl mx-auto px-4 sm:px-6 py-16 text-center">
+        <div class="reveal">
+          <h2 class="font-display text-2xl sm:text-3xl font-bold text-white mb-3">Still have a question?</h2>
+          <p class="text-white/60 mb-8">Our team is available 24/7. Just call or drop a WhatsApp message — we usually reply within minutes.</p>
+          <div class="flex flex-wrap justify-center gap-4">
+            <a href="tel:+919819431734" class="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-6 py-3.5 rounded-lg transition">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.5 21 3 13.5 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8z"/></svg>
+              Call 098194 31734
+            </a>
+            <a href="https://wa.me/919819431734?text=Hi%2C%20I%20have%20a%20question%20about%20your%20services" target="_blank" rel="noopener"
+              class="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-3.5 rounded-lg transition">
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-1 1.1-.2.2-.4.2-.7.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.8-1.6.1-.2 0-.4-.1-.5-.1-.2-.7-1.7-1-2.3-.2-.6-.4-.5-.7-.5h-.6c-.2 0-.6.1-.8.4-.3.3-1.1 1.1-1.1 2.6 0 1.5 1.1 3 1.3 3.2.2.2 2 3.2 5 4.4 2.5 1 3 .8 3.5.8.5 0 1.7-.7 1.9-1.4.2-.6.2-1.2.2-1.3 0-.1-.2-.2-.4-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
+              WhatsApp Us
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </section><!-- /page-faq -->
+
+  <!-- ================================================================ -->
+  <!-- ===== PAGE: CONTACT ===== -->
+  <!-- ================================================================ -->
+  <section id="page-contact" class="page-section">
+
+    <!-- ===== PAGE HERO ===== -->
+    <section class="relative bg-navy-950 overflow-hidden">
+      <div class="absolute inset-0 blueprint-grid"></div>
+      <div class="relative max-w-7xl mx-auto px-4 sm:px-6 py-14 sm:py-20 text-center">
+        <p class="text-amber-500 font-semibold text-sm tracking-wider mb-3">GET IN TOUCH</p>
+        <h1 class="font-display text-3xl sm:text-5xl font-bold text-white">Let's plan your project.</h1>
+        <p class="text-white/60 mt-4 max-w-xl mx-auto">Call, WhatsApp, or fill the form — our team responds within minutes, 24 hours a day.</p>
+      </div>
+    </section>
+
+    <!-- ===== CONTACT GRID ===== -->
+    <section class="bg-[#F8F7F4]">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-16 sm:py-20 grid lg:grid-cols-5 gap-8">
+
+        <!-- LEFT: Info card -->
+        <div class="reveal lg:col-span-2 bg-navy-950 rounded-2xl p-7 sm:p-8 text-white flex flex-col">
+          <h2 class="font-display text-2xl font-bold mb-2">Contact Details</h2>
+          <p class="text-white/60 text-sm mb-7">Reach us directly — no call centres, you speak to the team handling your job.</p>
+
+          <div class="space-y-5">
+            <a href="tel:+919819431734" class="flex items-start gap-4 group">
+              <div class="h-11 w-11 rounded-lg bg-amber-600 flex items-center justify-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.5 21 3 13.5 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.5.6 3.6.1.4 0 .8-.2 1L6.6 10.8z"/></svg>
+              </div>
+              <div>
+                <p class="text-white/50 text-xs">Call us directly</p>
+                <p class="font-semibold group-hover:text-amber-500 transition">098194 31734</p>
+              </div>
+            </a>
+
+            <a href="https://wa.me/919819431734" target="_blank" rel="noopener" class="flex items-start gap-4 group">
+              <div class="h-11 w-11 rounded-lg bg-green-500 flex items-center justify-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M17.5 14.4c-.3-.2-1.7-.8-2-.9-.3-.1-.5-.2-.7.2-.2.3-.8.9-1 1.1-.2.2-.4.2-.7.1-1.8-.9-3-1.6-4.2-3.6-.3-.5.3-.5.8-1.6.1-.2 0-.4-.1-.5-.1-.2-.7-1.7-1-2.3-.2-.6-.4-.5-.7-.5h-.6c-.2 0-.6.1-.8.4-.3.3-1.1 1.1-1.1 2.6 0 1.5 1.1 3 1.3 3.2.2.2 2 3.2 5 4.4 2.5 1 3 .8 3.5.8.5 0 1.7-.7 1.9-1.4.2-.6.2-1.2.2-1.3 0-.1-.2-.2-.4-.3z"/><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2z"/></svg>
+              </div>
+              <div>
+                <p class="text-white/50 text-xs">Chat on WhatsApp</p>
+                <p class="font-semibold group-hover:text-amber-500 transition">Message us now</p>
+              </div>
+            </a>
+
+            <div class="flex items-start gap-4">
+              <div class="h-11 w-11 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              </div>
+              <div>
+                <p class="text-white/50 text-xs">Visit our site office</p>
+                <p class="font-semibold">Vighnharta Temple, Sector 15,<br>Kopar Khairane, Navi Mumbai,<br>Maharashtra 400709</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-4">
+              <div class="h-11 w-11 rounded-lg bg-white/10 flex items-center justify-center flex-shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
+              <div>
+                <p class="text-white/50 text-xs">Working hours</p>
+                <p class="font-semibold">Open 24 Hours · 7 Days a Week</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-7 pt-6 border-t border-white/10 flex items-center gap-2">
+            <span class="flex items-center justify-center h-7 w-7 rounded-full bg-amber-600 text-white text-xs font-bold">★</span>
+            <span class="text-sm font-medium">4.9 Rating from 58 Google Reviews</span>
+          </div>
+
+          <!-- Map -->
+          <div class="mt-6 rounded-xl overflow-hidden border border-white/10">
+            <iframe
+              src="https://www.google.com/maps?q=Vighnharta+temple+Sector+15+Kopar+Khairane+Navi+Mumbai+Maharashtra+400709&output=embed"
+              width="100%" height="220" style="border:0;" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+              title="D.K. Enterprises location map"></iframe>
+          </div>
+        </div>
+
+        <!-- RIGHT: Lead form -->
+        <div class="reveal lg:col-span-3 bg-white rounded-2xl border border-navy-900/5 p-7 sm:p-9 shadow-sm">
+          <h2 class="font-display text-2xl font-bold text-navy-950 mb-1">Request a Free Quote</h2>
+          <p class="text-navy-900/60 text-sm mb-7">Fill the details below — our team will call you back within 30 minutes.</p>
+
+          <form id="quoteForm" class="space-y-5">
+            <div class="grid sm:grid-cols-2 gap-5">
+              <div>
+                <label for="name" class="block text-sm font-medium text-navy-900 mb-1.5">Full Name</label>
+                <input type="text" id="name" name="name" required placeholder="Your name"
+                  class="w-full border border-navy-900/15 rounded-lg px-4 py-2.5 text-sm focus:border-amber-600 transition">
+              </div>
+              <div>
+                <label for="phone" class="block text-sm font-medium text-navy-900 mb-1.5">Phone Number</label>
+                <input type="tel" id="phone" name="phone" required placeholder="10-digit mobile number" pattern="[0-9]{10}"
+                  class="w-full border border-navy-900/15 rounded-lg px-4 py-2.5 text-sm focus:border-amber-600 transition">
+              </div>
+            </div>
+
+            <div>
+              <label for="service" class="block text-sm font-medium text-navy-900 mb-1.5">Service Required</label>
+              <select id="service" name="service" required class="w-full border border-navy-900/15 rounded-lg px-4 py-2.5 text-sm focus:border-amber-600 transition bg-white">
+                <option value="" disabled selected>Select a service</option>
+                <option>Construction Engineering</option>
+                <option>All Civil Work</option>
+                <option>Tiles &amp; Marble Installation</option>
+                <option>Painting</option>
+                <option>Plumbing</option>
+                <option>Electrical Work</option>
+                <option>Other / Not Sure</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="address" class="block text-sm font-medium text-navy-900 mb-1.5">Site Address / Area</label>
+              <input type="text" id="address" name="address" placeholder="e.g. Kopar Khairane, Navi Mumbai"
+                class="w-full border border-navy-900/15 rounded-lg px-4 py-2.5 text-sm focus:border-amber-600 transition">
+            </div>
+
+            <div>
+              <label for="message" class="block text-sm font-medium text-navy-900 mb-1.5">Tell us about the work</label>
+              <textarea id="message" name="message" rows="4" placeholder="Briefly describe the job — area, scope, timeline..."
+                class="w-full border border-navy-900/15 rounded-lg px-4 py-2.5 text-sm focus:border-amber-600 transition resize-none"></textarea>
+            </div>
+
+            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-semibold px-7 py-3.5 rounded-lg transition shadow-lg shadow-amber-600/20">
+              Submit Request
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
+            </button>
+
+            <p id="formSuccess" class="hidden text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-sm">
+              Thank you! Your request has been noted. Our team will call you back shortly. For urgent work, please call <a href="tel:+919819431734" class="font-semibold underline">098194 31734</a> directly.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </section><!-- /page-contact -->
+
+  </main>
 
   <!-- ===== FOOTER ===== -->
   <footer class="bg-navy-950 text-white/60">
@@ -355,9 +1475,13 @@
       <div>
         <p class="font-display font-semibold text-white mb-4 text-sm tracking-wide">QUICK LINKS</p>
         <ul class="space-y-2 text-sm">
-          <li><a href="index.html" class="hover:text-amber-500">Home</a></li>
-          <li><a href="services.html" class="hover:text-amber-500">Services</a></li>
-          <li><a href="contact.html" class="hover:text-amber-500">Contact</a></li>
+          <li><a href="#home" data-page="home" class="nav-link hover:text-amber-500">Home</a></li>
+          <li><a href="#about" data-page="about" class="nav-link hover:text-amber-500">About</a></li>
+          <li><a href="#services" data-page="services" class="nav-link hover:text-amber-500">Services</a></li>
+          <li><a href="#gallery" data-page="gallery" class="nav-link hover:text-amber-500">Gallery</a></li>
+          <li><a href="#service-area" data-page="service-area" class="nav-link hover:text-amber-500">Service Area</a></li>
+          <li><a href="#faq" data-page="faq" class="nav-link hover:text-amber-500">FAQ</a></li>
+          <li><a href="#contact" data-page="contact" class="nav-link hover:text-amber-500">Contact</a></li>
         </ul>
       </div>
       <div>
@@ -388,25 +1512,155 @@
   </a>
 
 <script>
-  // Mobile menu toggle
-  const menuBtn = document.getElementById('menuBtn');
+  /* ============================================================
+     D.K. ENTERPRISES — Single-file SPA script
+     ============================================================ */
+
+  // ── SPA Page Routing ────────────────────────────────────────
+  const pages = document.querySelectorAll('.page-section');
+  const navLinks = document.querySelectorAll('.nav-link');
+
+  function showPage(pageName, scrollTop = true) {
+    pages.forEach(p => p.classList.remove('active'));
+    const target = document.getElementById('page-' + pageName);
+    if (target) target.classList.add('active');
+
+    navLinks.forEach(link => {
+      link.classList.toggle('text-amber-500', link.dataset.page === pageName);
+    });
+
+    if (scrollTop) window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+
+    // Re-trigger reveal animations for the newly shown page
+    target?.querySelectorAll('.reveal').forEach(el => el.classList.remove('show'));
+    setTimeout(() => {
+      target?.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+    }, 10);
+  }
+
+  navLinks.forEach(link => {
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const page = link.dataset.page;
+      history.pushState(null, '', '#' + page);
+      showPage(page);
+      // Close mobile menu if open
+      hamburger?.classList.remove('is-open');
+      mobileMenu?.classList.remove('is-open');
+    });
+  });
+
+  window.addEventListener('popstate', () => {
+    const page = window.location.hash.replace('#', '') || 'home';
+    showPage(page);
+  });
+
+  // Initial page load based on hash
+  const initialPage = window.location.hash.replace('#', '') || 'home';
+  showPage(initialPage, false);
+
+  // ── Footer Year ──────────────────────────────────────────── 
+  const yearEl = document.getElementById('year');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  // ── Hamburger Menu ───────────────────────────────────────── 
+  const hamburger = document.getElementById('hamburger');
   const mobileMenu = document.getElementById('mobileMenu');
-  menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
 
-  // Footer year
-  document.getElementById('year').textContent = new Date().getFullYear();
+  if (hamburger && mobileMenu) {
+    hamburger.addEventListener('click', () => {
+      const isOpen = !mobileMenu.classList.contains('hidden');
+      mobileMenu.classList.toggle('hidden');
+      hamburger.setAttribute('aria-expanded', !isOpen);
+    });
+  }
 
-  // Scroll reveal animation
-  const reveals = document.querySelectorAll('.reveal');
-  const observer = new IntersectionObserver((entries) => {
+  // ── Scroll Reveal with stagger ──────────────────────────────
+  const revealObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
         entry.target.classList.add('show');
-        observer.unobserve(entry.target);
+        revealObserver.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.15 });
-  reveals.forEach(el => observer.observe(el));
+  }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+  document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+  // ── FAQ Accordion ────────────────────────────────────────── 
+  document.querySelectorAll('.faq-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      item.closest('.bg-white')?.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+
+  // ── Sticky header shadow on scroll ──────────────────────── 
+  const header = document.querySelector('header');
+  if (header) {
+    window.addEventListener('scroll', () => {
+      header.style.boxShadow = window.scrollY > 10
+        ? '0 2px 20px rgba(0,0,0,0.25)'
+        : 'none';
+    }, { passive: true });
+  }
+
+  // ── Gallery Filter ───────────────────────────────────────── 
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const galleryCards = document.querySelectorAll('#galleryGrid [data-category]');
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const filter = btn.dataset.filter;
+      galleryCards.forEach(card => {
+        card.style.display = (filter === 'all' || card.dataset.category === filter) ? '' : 'none';
+      });
+    });
+  });
+
+  // ── Gallery Lightbox ─────────────────────────────────────── 
+  const lightbox = document.getElementById('lightbox');
+  const lbContent = document.getElementById('lbContent');
+  galleryCards.forEach(card => {
+    card.addEventListener('click', () => {
+      const img = card.dataset.img || card.querySelector('img')?.src || '';
+      const title = card.dataset.title || '';
+      lbContent.innerHTML = `<img src="${img}" style="max-width:88vw;max-height:78vh;border-radius:12px;display:block;margin:0 auto;"><p style="font-family:'Poppins',sans-serif;font-weight:700;font-size:1.1rem;margin-top:16px;">${title}</p>`;
+      lightbox.classList.add('open');
+    });
+  });
+  document.getElementById('lbClose')?.addEventListener('click', () => lightbox.classList.remove('open'));
+  lightbox?.addEventListener('click', e => { if (e.target === lightbox) lightbox.classList.remove('open'); });
+
+  // ── WhatsApp Quote Form (contact page) ──────────────────── 
+  const quoteForm = document.getElementById('quoteForm');
+  const formSuccess = document.getElementById('formSuccess');
+  if (quoteForm) {
+    quoteForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const name    = document.getElementById('name').value.trim();
+      const phone   = document.getElementById('phone').value.trim();
+      const service = document.getElementById('service').value;
+      const address = document.getElementById('address')?.value.trim() || '';
+      const message = document.getElementById('message').value.trim();
+
+      const text = [
+        'New Quote Request via Website',
+        '',
+        `Name: ${name}`,
+        `Phone: ${phone}`,
+        `Service: ${service}`,
+        address ? `Area: ${address}` : '',
+        message ? `Details: ${message}` : '',
+      ].filter(Boolean).join('\n');
+
+      if (formSuccess) formSuccess.classList.remove('hidden');
+      quoteForm.reset();
+      window.open(`https://wa.me/919819431734?text=${encodeURIComponent(text)}`, '_blank');
+    });
+  }
 </script>
 </body>
 </html>
